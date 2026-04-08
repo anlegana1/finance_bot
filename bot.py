@@ -64,10 +64,13 @@ Return ONLY a JSON object with this exact structure:
     "transaction_type": "expense or income",
     "amount": number (without currency symbols),
     "description": "brief and clear description of the transaction",
-    "category": "for expenses use one of: Food, Transportation, Entertainment, Services, Health, Shopping, Other; for income use one of: Salary, Freelance, Business, Investment, Gift, Refund, Other"
+    "category": "for expenses use one of: Food, Transportation, Entertainment, Services, Health, Shopping, Other; for income use one of: Salary, Freelance, Business, Investment, Gift, Refund, Other",
+    "date": "YYYY-MM-DD format if a date is mentioned, or null if no date is mentioned"
 }}
 
 If the amount cannot be determined, use 0.
+If no date is mentioned in the text, use null for date.
+Current date is {datetime.now().strftime('%Y-%m-%d')} for reference.
         """
         
         response = openai_client.chat.completions.create(
@@ -92,11 +95,23 @@ If the amount cannot be determined, use 0.
             "amount": 0,
             "description": description,
             "category": "Other",
-            "currency": "CAD"
+            "currency": "CAD",
+            "date": None
         }
 
 async def save_expense(user_id: int, username: str, expense_data: dict):
     try:
+        transaction_date = expense_data.get("date")
+        if transaction_date:
+            try:
+                from dateutil import parser
+                parsed_date = parser.parse(transaction_date)
+                date_iso = parsed_date.isoformat()
+            except:
+                date_iso = datetime.now().isoformat()
+        else:
+            date_iso = datetime.now().isoformat()
+        
         data = {
             "user_id": user_id,
             "username": username,
@@ -105,7 +120,7 @@ async def save_expense(user_id: int, username: str, expense_data: dict):
             "currency": "CAD",
             "description": expense_data["description"],
             "category": expense_data["category"],
-            "date": datetime.now().isoformat()
+            "date": date_iso
         }
         
         result = supabase.table('expenses').insert(data).execute()
