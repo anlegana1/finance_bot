@@ -313,22 +313,9 @@ Categories are assigned automatically based on your description.
 
 def main():
     try:
-        logger.info("Starting Telegram application build...")
-        app = Application.builder().token(Config.TELEGRAM_BOT_TOKEN).build()
-        
-        app.add_handler(CommandHandler("start", start))
-        app.add_handler(CommandHandler("summary", summary))
-        app.add_handler(CommandHandler("categories", categories))
-        
-        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
-        app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
-        app.add_handler(MessageHandler(filters.VOICE, handle_voice))
-        
-        logger.info("✅ Bot started successfully...")
-        logger.info("🤖 Waiting for messages...")
-        
         from threading import Thread
         from http.server import HTTPServer, BaseHTTPRequestHandler
+        import time
         
         class HealthHandler(BaseHTTPRequestHandler):
             def do_GET(self):
@@ -344,11 +331,27 @@ def main():
         server = HTTPServer(('0.0.0.0', port), HealthHandler)
         
         def run_server():
-            logger.info(f"Starting HTTP server on port {port}...")
+            logger.info(f"✅ HTTP server started on port {port}")
             server.serve_forever()
         
+        logger.info(f"Starting HTTP server on port {port}...")
         server_thread = Thread(target=run_server, daemon=True)
         server_thread.start()
+        time.sleep(1)
+        
+        logger.info("Starting Telegram application build...")
+        app = Application.builder().token(Config.TELEGRAM_BOT_TOKEN).build()
+        
+        app.add_handler(CommandHandler("start", start))
+        app.add_handler(CommandHandler("summary", summary))
+        app.add_handler(CommandHandler("categories", categories))
+        
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+        app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
+        app.add_handler(MessageHandler(filters.VOICE, handle_voice))
+        
+        logger.info("✅ Bot started successfully...")
+        logger.info("🤖 Waiting for messages...")
         
         app.run_polling(allowed_updates=Update.ALL_TYPES)
     except Exception as e:
