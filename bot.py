@@ -11,6 +11,11 @@ from config import Config
 
 try:
     Config.validate()
+    print("Python environment loaded")
+print("httpx version:", httpx.__version__)
+print("supabase module:", getattr(supabase, "__file__", "unknown"))
+print("SUPABASE_URL exists:", bool(Config.SUPABASE_URL))
+print("SUPABASE_KEY exists:", bool(Config.SUPABASE_KEY))
 except ValueError as e:
     print(f"Configuration error: {e}")
     print("Please copy .env.example to .env and configure your credentials.")
