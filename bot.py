@@ -7,6 +7,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from openai import OpenAI
 from supabase import create_client, Client
+import supabase
 from config import Config
 import httpx
 
