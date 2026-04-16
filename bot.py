@@ -2,6 +2,7 @@ import os
 import logging
 import json
 import base64
+import sys
 from datetime import datetime
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
@@ -20,8 +21,11 @@ except ValueError as e:
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.INFO,
+    stream=sys.stdout,
+    force=True
 )
+logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 openai_client = OpenAI(api_key=Config.OPENAI_API_KEY)
