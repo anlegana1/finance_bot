@@ -355,7 +355,7 @@ def main():
         time.sleep(1)
         
         logger.info("Starting Telegram application build...")
-        app = Application.builder().token(Config.TELEGRAM_BOT_TOKEN).build()
+        app = Application.builder().token(Config.TELEGRAM_BOT_TOKEN).connect_timeout(30).read_timeout(30).write_timeout(30).pool_timeout(30).build()
         
         app.add_handler(CommandHandler("start", start))
         app.add_handler(CommandHandler("summary", summary))
@@ -368,9 +368,17 @@ def main():
         logger.info("✅ Bot started successfully...")
         logger.info("🤖 Waiting for messages...")
         
-        app.run_polling(allowed_updates=Update.ALL_TYPES)
+        while True:
+            try:
+                app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
+            except Exception as poll_error:
+                logger.error(f"⚠️ Polling error: {poll_error}")
+                logger.info("🔄 Reconnecting in 5 seconds...")
+                time.sleep(5)
+    except KeyboardInterrupt:
+        logger.info("🛑 Bot stopped by user")
     except Exception as e:
-        logger.error(f"❌ Error starting bot: {e}")
+        logger.error(f"❌ Fatal error starting bot: {e}")
         raise
 
 if __name__ == '__main__':
