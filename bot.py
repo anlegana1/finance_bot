@@ -372,13 +372,7 @@ def main():
         logger.info("✅ Bot started successfully...")
         logger.info("🤖 Waiting for messages...")
         
-        while True:
-            try:
-                app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
-            except Exception as poll_error:
-                logger.error(f"⚠️ Polling error: {poll_error}")
-                logger.info("🔄 Reconnecting in 5 seconds...")
-                time.sleep(5)
+        app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
     except KeyboardInterrupt:
         logger.info("🛑 Bot stopped by user")
     except Exception as e:
