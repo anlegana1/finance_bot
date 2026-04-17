@@ -9,13 +9,20 @@ class Config:
     SUPABASE_URL = os.getenv('SUPABASE_URL')
     SUPABASE_KEY = os.getenv('SUPABASE_KEY')
     
-    CATEGORIES = [
+    EXPENSE_CATEGORIES = [
         'Food',
+        'Groceries',
+        'Eating Out',
+        'Drinks Out',
         'Transportation',
         'Entertainment',
         'Services',
         'Health',
         'Shopping',
+        'Other'
+    ]
+
+    INCOME_CATEGORIES = [
         'Salary',
         'Freelance',
         'Business',
@@ -24,6 +31,8 @@ class Config:
         'Refund',
         'Other'
     ]
+
+    CATEGORIES = EXPENSE_CATEGORIES + INCOME_CATEGORIES
     
     @classmethod
     def validate(cls):

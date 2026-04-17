@@ -62,6 +62,8 @@ Send your first transaction!
 
 async def categorize_transaction(description: str) -> dict:
     try:
+        expense_categories = ", ".join(Config.EXPENSE_CATEGORIES)
+        income_categories = ", ".join(Config.INCOME_CATEGORIES)
         prompt = f"""
 Analyze the following financial transaction and extract information in JSON format:
 "{description}"
@@ -71,7 +73,7 @@ Return ONLY a JSON object with this exact structure:
     "transaction_type": "expense or income",
     "amount": number (without currency symbols),
     "description": "brief and clear description of the transaction",
-    "category": "for expenses use one of: Food, Transportation, Entertainment, Services, Health, Shopping, Other; for income use one of: Salary, Freelance, Business, Investment, Gift, Refund, Other",
+    "category": "for expenses use one of: {expense_categories}; for income use one of: {income_categories}",
     "date": "YYYY-MM-DD format if a date is mentioned, or null if no date is mentioned"
 }}
 
@@ -281,7 +283,7 @@ async def edit_field_selection(update: Update, context: ContextTypes.DEFAULT_TYP
         await query.edit_message_text("💵 Enter the new amount (number only):")
         return EDIT_AMOUNT
     elif query.data == "edit_category":
-        categories = ['Food', 'Transportation', 'Entertainment', 'Services', 'Health', 'Shopping', 'Other']
+        categories = Config.EXPENSE_CATEGORIES
         keyboard = [[InlineKeyboardButton(cat, callback_data=f"cat_{cat}")] for cat in categories]
         keyboard.append([InlineKeyboardButton("❌ Cancel", callback_data="cancel")])
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -321,7 +323,7 @@ async def update_category(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data.clear()
         return ConversationHandler.END
     
-    new_category = query.data.split("_")[1]
+    new_category = query.data.replace("cat_", "", 1)
     expense_id = context.user_data.get('editing_id')
     
     try:
@@ -531,26 +533,16 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Error getting summary.")
 
 async def categories(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    categories_text = """
+    expense_lines = "\n".join([f"• {cat}" for cat in Config.EXPENSE_CATEGORIES])
+    income_lines = "\n".join([f"• {cat}" for cat in Config.INCOME_CATEGORIES])
+    categories_text = f"""
 🏷️ Available categories:
 
 Expense categories:
-• Food 🍔
-• Transportation 🚗
-• Entertainment 🎬
-• Services 💡
-• Health 💊
-• Shopping 🛍️
-• Other 📦
+{expense_lines}
 
 Income categories:
-• Salary 💼
-• Freelance 🧑‍💻
-• Business 🏢
-• Investment 📈
-• Gift 🎁
-• Refund 🔁
-• Other 📦
+{income_lines}
 
 Categories are assigned automatically based on your description.
     """
