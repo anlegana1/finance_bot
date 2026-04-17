@@ -215,7 +215,7 @@ async def select_transaction(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await query.edit_message_text("❌ Operation cancelled.")
         return ConversationHandler.END
     
-    expense_id = int(query.data.split("_")[1])
+    expense_id = query.data.split("_")[1]
     context.user_data['editing_id'] = expense_id
     
     try:
