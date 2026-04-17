@@ -19,6 +19,7 @@ class Config:
         'Services',
         'Health',
         'Shopping',
+        'Investment',
         'Other'
     ]
 
