@@ -594,10 +594,10 @@ def main():
         edit_handler = ConversationHandler(
             entry_points=[CommandHandler("edit", edit_command)],
             states={
-                0: [CallbackQueryHandler(select_transaction)],
-                1: [CallbackQueryHandler(edit_field_selection)],
+                0: [CallbackQueryHandler(select_transaction, pattern="^(select_|cancel)")],
+                1: [CallbackQueryHandler(edit_field_selection, pattern="^(edit_|delete|cancel)")],
                 EDIT_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, update_amount)],
-                EDIT_CATEGORY: [CallbackQueryHandler(update_category)],
+                EDIT_CATEGORY: [CallbackQueryHandler(update_category, pattern="^(cat_|cancel)")],
                 EDIT_DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, update_description)],
                 EDIT_DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, update_date)],
             },
