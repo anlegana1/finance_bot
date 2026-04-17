@@ -170,37 +170,47 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Error saving transaction. Please try again.")
 
 async def edit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    logger.info(f"edit_command started for user {user_id}")
-    
     try:
-        result = supabase.table('expenses').select("*").eq('user_id', user_id).order('created_at', desc=True).limit(5).execute()
-        logger.info(f"Fetched {len(result.data) if result.data else 0} transactions")
+        user_id = update.effective_user.id
+        logger.info(f"🔧 edit_command started for user {user_id}")
         
-        if not result.data:
-            await update.message.reply_text("📭 You have no registered transactions.")
-            logger.info("No transactions found, ending conversation")
+        try:
+            result = supabase.table('expenses').select("*").eq('user_id', user_id).order('created_at', desc=True).limit(5).execute()
+            logger.info(f"📊 Fetched {len(result.data) if result.data else 0} transactions")
+            
+            if not result.data:
+                await update.message.reply_text("📭 You have no registered transactions.")
+                logger.info("No transactions found, ending conversation")
+                return ConversationHandler.END
+            
+            keyboard = []
+            for expense in result.data:
+                date_str = expense['date'][:10] if expense.get('date') else 'No date'
+                button_text = f"${expense['amount']:.2f} - {expense['category']} - {date_str}"
+                keyboard.append([InlineKeyboardButton(button_text, callback_data=f"select_{expense['id']}")])
+            
+            keyboard.append([InlineKeyboardButton("❌ Cancel", callback_data="cancel")])
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            logger.info("📤 Sending transaction list to user")
+            await update.message.reply_text(
+                "📋 Select the transaction you want to edit:",
+                reply_markup=reply_markup
+            )
+            logger.info("✅ Returning SELECT_TRANSACTION state")
+            return SELECT_TRANSACTION
+            
+        except Exception as e:
+            logger.error(f"❌ Error in edit_command inner try: {e}", exc_info=True)
+            await update.message.reply_text("❌ Error fetching transactions.")
             return ConversationHandler.END
-        
-        keyboard = []
-        for expense in result.data:
-            date_str = expense['date'][:10] if expense.get('date') else 'No date'
-            button_text = f"${expense['amount']:.2f} - {expense['category']} - {date_str}"
-            keyboard.append([InlineKeyboardButton(button_text, callback_data=f"select_{expense['id']}")])
-        
-        keyboard.append([InlineKeyboardButton("❌ Cancel", callback_data="cancel")])
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await update.message.reply_text(
-            "📋 Select the transaction you want to edit:",
-            reply_markup=reply_markup
-        )
-        logger.info("Returning state 0 - waiting for transaction selection")
-        return SELECT_TRANSACTION
-        
+            
     except Exception as e:
-        logger.error(f"Error fetching transactions: {e}")
-        await update.message.reply_text("❌ Error fetching transactions.")
+        logger.error(f"❌ CRITICAL ERROR in edit_command: {e}", exc_info=True)
+        try:
+            await update.message.reply_text("❌ An unexpected error occurred.")
+        except:
+            pass
         return ConversationHandler.END
 
 async def select_transaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
