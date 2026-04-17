@@ -197,9 +197,11 @@ async def edit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def select_transaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handles transaction selection from the edit menu"""
+    logger.info("✅ select_transaction CALLED")
     query = update.callback_query
-    logger.info(f"select_transaction called with callback: {query.data}")
+    logger.info(f"Callback data: {query.data}")
     await query.answer()
+    logger.info("Query answered")
     
     if query.data == "cancel":
         await query.edit_message_text("❌ Operation cancelled.")
@@ -240,6 +242,7 @@ What do you want to modify?
         """
         
         await query.edit_message_text(text, reply_markup=reply_markup)
+        logger.info("Returning state 1 - waiting for field selection")
         return 1
         
     except Exception as e:
@@ -248,9 +251,11 @@ What do you want to modify?
         return ConversationHandler.END
 
 async def edit_field_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info("✅ edit_field_selection CALLED")
     query = update.callback_query
-    logger.info(f"edit_field_selection called with callback: {query.data}")
+    logger.info(f"Callback data: {query.data}")
     await query.answer()
+    logger.info("Query answered")
     
     if query.data == "cancel":
         await query.edit_message_text("❌ Operation cancelled.")
@@ -597,17 +602,10 @@ def main():
                 EDIT_DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, update_date)],
             },
             fallbacks=[CommandHandler("cancel", cancel_edit)],
-            per_message=False
+            per_chat=True
         )
         
         app.add_handler(edit_handler)
-        
-        # Debug: Log all callback queries
-        async def log_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-            if update.callback_query:
-                logger.info(f"🔍 DEBUG: Callback received: {update.callback_query.data}")
-        
-        app.add_handler(CallbackQueryHandler(log_callback), group=1)
         
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
         app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
