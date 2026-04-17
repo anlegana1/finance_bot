@@ -604,7 +604,7 @@ def main():
                 EDIT_DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, update_date)],
             },
             fallbacks=[CommandHandler("cancel", cancel_edit)],
-            per_chat=True
+            per_message=True
         )
         
         app.add_handler(edit_handler)
