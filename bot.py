@@ -580,12 +580,10 @@ def main():
                 EDIT_DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, update_date)],
             },
             fallbacks=[CommandHandler("cancel", cancel_edit)],
-            allow_reentry=True
+            per_message=False
         )
         
         app.add_handler(edit_handler)
-        app.add_handler(CallbackQueryHandler(select_transaction, pattern="^select_"))
-        app.add_handler(CallbackQueryHandler(edit_field_selection))
         
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
         app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
