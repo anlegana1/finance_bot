@@ -163,12 +163,15 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def edit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
+    logger.info(f"edit_command started for user {user_id}")
     
     try:
         result = supabase.table('expenses').select("*").eq('user_id', user_id).order('created_at', desc=True).limit(5).execute()
+        logger.info(f"Fetched {len(result.data) if result.data else 0} transactions")
         
         if not result.data:
             await update.message.reply_text("📭 You have no registered transactions.")
+            logger.info("No transactions found, ending conversation")
             return ConversationHandler.END
         
         keyboard = []
@@ -184,6 +187,7 @@ async def edit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📋 Select the transaction you want to edit:",
             reply_markup=reply_markup
         )
+        logger.info("Returning state 0 - waiting for transaction selection")
         return 0
         
     except Exception as e:
@@ -597,6 +601,13 @@ def main():
         )
         
         app.add_handler(edit_handler)
+        
+        # Debug: Log all callback queries
+        async def log_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if update.callback_query:
+                logger.info(f"🔍 DEBUG: Callback received: {update.callback_query.data}")
+        
+        app.add_handler(CallbackQueryHandler(log_callback), group=1)
         
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
         app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
