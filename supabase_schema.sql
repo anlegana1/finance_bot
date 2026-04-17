@@ -1,13 +1,13 @@
 -- Table to store expenses
 CREATE TABLE IF NOT EXISTS expenses (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id BIGINT NOT NULL,
     username TEXT NOT NULL,
     transaction_type TEXT NOT NULL CHECK (transaction_type IN ('expense', 'income')),
     amount DECIMAL(10, 2) NOT NULL,
     currency TEXT NOT NULL DEFAULT 'CAD' CHECK (currency = 'CAD'),
     description TEXT NOT NULL,
-    category TEXT NOT NULL CHECK (category IN ('Food', 'Transportation', 'Entertainment', 'Services', 'Health', 'Shopping', 'Salary', 'Freelance', 'Business', 'Investment', 'Gift', 'Refund', 'Other')),
+    category TEXT NOT NULL,
     date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
