@@ -283,7 +283,15 @@ async def edit_field_selection(update: Update, context: ContextTypes.DEFAULT_TYP
         await query.edit_message_text("💵 Enter the new amount (number only):")
         return EDIT_AMOUNT
     elif query.data == "edit_category":
-        categories = Config.EXPENSE_CATEGORIES
+        expense = context.user_data.get('current_expense')
+        transaction_type = expense.get('transaction_type', 'expense')
+        
+        # Use correct category list based on transaction type
+        if transaction_type == 'income':
+            categories = Config.INCOME_CATEGORIES
+        else:
+            categories = Config.EXPENSE_CATEGORIES
+        
         keyboard = [[InlineKeyboardButton(cat, callback_data=f"cat_{cat}")] for cat in categories]
         keyboard.append([InlineKeyboardButton("❌ Cancel", callback_data="cancel")])
         reply_markup = InlineKeyboardMarkup(keyboard)
