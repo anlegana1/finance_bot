@@ -143,6 +143,12 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     logger.info(f"handle_text called with: '{text}' by user {user_id}")
     
+    # Suggest using command format for common commands
+    text_lower = text.strip().lower()
+    if text_lower in ['edit', 'summary', 'categories', 'cancel']:
+        await update.message.reply_text(f"💡 Use: /{text_lower}")
+        return
+    
     await update.message.reply_text("⏳ Processing your transaction...")
     
     expense_data = await categorize_transaction(text)
@@ -585,13 +591,9 @@ def main():
         app.add_handler(CommandHandler("summary", summary))
         app.add_handler(CommandHandler("categories", categories))
         
-        # Custom filter to capture "edit" text without slash (case-insensitive)
-        edit_text_filter = filters.Regex(r'(?i)^edit$')
-        
         edit_handler = ConversationHandler(
             entry_points=[
-                CommandHandler("edit", edit_command),
-                MessageHandler(edit_text_filter, edit_command)
+                CommandHandler("edit", edit_command)
             ],
             states={
                 0: [CallbackQueryHandler(select_transaction, pattern="^(select_|cancel)")],
