@@ -186,7 +186,7 @@ async def edit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         result = supabase.table('expenses').select("*").eq('user_id', user_id).order('created_at', desc=True).limit(5).execute()
         
         if not result.data:
-            await update.message.reply_text("📭 No tienes transacciones registradas.")
+            await update.message.reply_text("📭 You have no registered transactions.")
             return ConversationHandler.END
         
         keyboard = []
@@ -195,27 +195,28 @@ async def edit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             button_text = f"${expense['amount']:.2f} - {expense['category']} - {date_str}"
             keyboard.append([InlineKeyboardButton(button_text, callback_data=f"select_{expense['id']}")])
         
-        keyboard.append([InlineKeyboardButton("❌ Cancelar", callback_data="cancel")])
+        keyboard.append([InlineKeyboardButton("❌ Cancel", callback_data="cancel")])
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         await update.message.reply_text(
-            "📋 Selecciona la transacción que quieres editar:",
+            "📋 Select the transaction you want to edit:",
             reply_markup=reply_markup
         )
         return 0
         
     except Exception as e:
         logger.error(f"Error fetching transactions: {e}")
-        await update.message.reply_text("❌ Error al obtener transacciones.")
+        await update.message.reply_text("❌ Error fetching transactions.")
         return ConversationHandler.END
 
 async def select_transaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handles transaction selection from the edit menu"""
     query = update.callback_query
+    logger.info(f"select_transaction called with callback: {query.data}")
     await query.answer()
     
     if query.data == "cancel":
-        await query.edit_message_text("❌ Operación cancelada.")
+        await query.edit_message_text("❌ Operation cancelled.")
         return ConversationHandler.END
     
     expense_id = int(query.data.split("_")[1])
@@ -225,31 +226,31 @@ async def select_transaction(update: Update, context: ContextTypes.DEFAULT_TYPE)
         result = supabase.table('expenses').select("*").eq('id', expense_id).execute()
         
         if not result.data:
-            await query.edit_message_text("❌ Transacción no encontrada.")
+            await query.edit_message_text("❌ Transaction not found.")
             return ConversationHandler.END
         
         expense = result.data[0]
         context.user_data['current_expense'] = expense
         
         keyboard = [
-            [InlineKeyboardButton("💵 Monto", callback_data="edit_amount")],
-            [InlineKeyboardButton("🏷️ Categoría", callback_data="edit_category")],
-            [InlineKeyboardButton("📋 Descripción", callback_data="edit_description")],
-            [InlineKeyboardButton("📅 Fecha", callback_data="edit_date")],
-            [InlineKeyboardButton("🗑️ Eliminar", callback_data="delete")],
-            [InlineKeyboardButton("❌ Cancelar", callback_data="cancel")]
+            [InlineKeyboardButton("💵 Amount", callback_data="edit_amount")],
+            [InlineKeyboardButton("🏷️ Category", callback_data="edit_category")],
+            [InlineKeyboardButton("📋 Description", callback_data="edit_description")],
+            [InlineKeyboardButton("📅 Date", callback_data="edit_date")],
+            [InlineKeyboardButton("🗑️ Delete", callback_data="delete")],
+            [InlineKeyboardButton("❌ Cancel", callback_data="cancel")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         text = f"""
-📝 Editando transacción:
+📝 Editing transaction:
 
-💵 Monto: ${expense['amount']:.2f}
-🏷️ Categoría: {expense['category']}
-📋 Descripción: {expense['description']}
-📅 Fecha: {expense.get('date', 'N/A')[:10]}
+💵 Amount: ${expense['amount']:.2f}
+🏷️ Category: {expense['category']}
+📋 Description: {expense['description']}
+📅 Date: {expense.get('date', 'N/A')[:10]}
 
-¿Qué quieres modificar?
+What do you want to modify?
         """
         
         await query.edit_message_text(text, reply_markup=reply_markup)
@@ -257,42 +258,43 @@ async def select_transaction(update: Update, context: ContextTypes.DEFAULT_TYPE)
         
     except Exception as e:
         logger.error(f"Error loading transaction: {e}")
-        await query.edit_message_text("❌ Error al cargar transacción.")
+        await query.edit_message_text("❌ Error loading transaction.")
         return ConversationHandler.END
 
 async def edit_field_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    logger.info(f"edit_field_selection called with callback: {query.data}")
     await query.answer()
     
     if query.data == "cancel":
-        await query.edit_message_text("❌ Operación cancelada.")
+        await query.edit_message_text("❌ Operation cancelled.")
         return ConversationHandler.END
     
     if query.data == "delete":
         expense_id = context.user_data.get('editing_id')
         try:
             supabase.table('expenses').delete().eq('id', expense_id).execute()
-            await query.edit_message_text("✅ Transacción eliminada exitosamente.")
+            await query.edit_message_text("✅ Transaction deleted successfully.")
         except Exception as e:
             logger.error(f"Error deleting: {e}")
-            await query.edit_message_text("❌ Error al eliminar transacción.")
+            await query.edit_message_text("❌ Error deleting transaction.")
         return ConversationHandler.END
     
     if query.data == "edit_amount":
-        await query.edit_message_text("💵 Escribe el nuevo monto (solo número):")
+        await query.edit_message_text("💵 Enter the new amount (number only):")
         return EDIT_AMOUNT
     elif query.data == "edit_category":
         categories = ['Food', 'Transportation', 'Entertainment', 'Services', 'Health', 'Shopping', 'Other']
         keyboard = [[InlineKeyboardButton(cat, callback_data=f"cat_{cat}")] for cat in categories]
-        keyboard.append([InlineKeyboardButton("❌ Cancelar", callback_data="cancel")])
+        keyboard.append([InlineKeyboardButton("❌ Cancel", callback_data="cancel")])
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("🏷️ Selecciona la nueva categoría:", reply_markup=reply_markup)
+        await query.edit_message_text("🏷️ Select the new category:", reply_markup=reply_markup)
         return EDIT_CATEGORY
     elif query.data == "edit_description":
-        await query.edit_message_text("📋 Escribe la nueva descripción:")
+        await query.edit_message_text("📋 Enter the new description:")
         return EDIT_DESCRIPTION
     elif query.data == "edit_date":
-        await query.edit_message_text("📅 Escribe la nueva fecha (ej: 'hoy', 'ayer', '15 de abril'):")
+        await query.edit_message_text("📅 Enter the new date (e.g., 'today', 'yesterday', 'April 15'):")
         return EDIT_DATE
 
 async def update_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -302,15 +304,15 @@ async def update_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         supabase.table('expenses').update({'amount': new_amount}).eq('id', expense_id).execute()
         
-        await update.message.reply_text(f"✅ Monto actualizado a ${new_amount:.2f}")
+        await update.message.reply_text(f"✅ Amount updated to ${new_amount:.2f}")
         context.user_data.clear()
         return ConversationHandler.END
     except ValueError:
-        await update.message.reply_text("❌ Por favor escribe un número válido.")
+        await update.message.reply_text("❌ Please enter a valid number.")
         return EDIT_AMOUNT
     except Exception as e:
         logger.error(f"Error updating amount: {e}")
-        await update.message.reply_text("❌ Error al actualizar.")
+        await update.message.reply_text("❌ Error updating.")
         return ConversationHandler.END
 
 async def update_category(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -318,7 +320,7 @@ async def update_category(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     
     if query.data == "cancel":
-        await query.edit_message_text("❌ Operación cancelada.")
+        await query.edit_message_text("❌ Operation cancelled.")
         context.user_data.clear()
         return ConversationHandler.END
     
@@ -327,12 +329,12 @@ async def update_category(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     try:
         supabase.table('expenses').update({'category': new_category}).eq('id', expense_id).execute()
-        await query.edit_message_text(f"✅ Categoría actualizada a {new_category}")
+        await query.edit_message_text(f"✅ Category updated to {new_category}")
         context.user_data.clear()
         return ConversationHandler.END
     except Exception as e:
         logger.error(f"Error updating category: {e}")
-        await query.edit_message_text("❌ Error al actualizar.")
+        await query.edit_message_text("❌ Error updating.")
         return ConversationHandler.END
 
 async def update_description(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -341,12 +343,12 @@ async def update_description(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     try:
         supabase.table('expenses').update({'description': new_description}).eq('id', expense_id).execute()
-        await update.message.reply_text(f"✅ Descripción actualizada")
+        await update.message.reply_text(f"✅ Description updated")
         context.user_data.clear()
         return ConversationHandler.END
     except Exception as e:
         logger.error(f"Error updating description: {e}")
-        await update.message.reply_text("❌ Error al actualizar.")
+        await update.message.reply_text("❌ Error updating.")
         return ConversationHandler.END
 
 async def update_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -367,20 +369,20 @@ async def update_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
         date_iso = parsed_date.isoformat()
         supabase.table('expenses').update({'date': date_iso}).eq('id', expense_id).execute()
         
-        await update.message.reply_text(f"✅ Fecha actualizada a {parsed_date.strftime('%Y-%m-%d')}")
+        await update.message.reply_text(f"✅ Date updated to {parsed_date.strftime('%Y-%m-%d')}")
         context.user_data.clear()
         return ConversationHandler.END
     except Exception as e:
         logger.error(f"Error updating date: {e}")
-        await update.message.reply_text("❌ No pude entender esa fecha. Intenta de nuevo.")
+        await update.message.reply_text("❌ Couldn't understand that date. Please try again.")
         return EDIT_DATE
 
 async def cancel_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
     if update.callback_query:
-        await update.callback_query.edit_message_text("❌ Operación cancelada.")
+        await update.callback_query.edit_message_text("❌ Operation cancelled.")
     else:
-        await update.message.reply_text("❌ Operación cancelada.")
+        await update.message.reply_text("❌ Operation cancelled.")
     return ConversationHandler.END
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
