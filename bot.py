@@ -182,6 +182,7 @@ async def edit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📋 Selecciona la transacción que quieres editar:",
             reply_markup=reply_markup
         )
+        return 0
         
     except Exception as e:
         logger.error(f"Error fetching transactions: {e}")
@@ -231,6 +232,7 @@ async def select_transaction(update: Update, context: ContextTypes.DEFAULT_TYPE)
         """
         
         await query.edit_message_text(text, reply_markup=reply_markup)
+        return 1
         
     except Exception as e:
         logger.error(f"Error loading transaction: {e}")
