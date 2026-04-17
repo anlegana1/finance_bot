@@ -603,11 +603,7 @@ def main():
                 EDIT_DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, update_description)],
                 EDIT_DATE: [MessageHandler(filters.TEXT & ~filters.COMMAND, update_date)],
             },
-            fallbacks=[CommandHandler("cancel", cancel_edit)],
-            name="edit_conversation",
-            per_chat=True,
-            per_user=True,
-            per_message=False
+            fallbacks=[CommandHandler("cancel", cancel_edit)]
         )
         
         app.add_handler(edit_handler)
