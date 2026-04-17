@@ -143,24 +143,6 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     logger.info(f"handle_text called with: '{text}' by user {user_id}")
     
-    # Detectar comandos sin barra
-    text_lower = text.strip().lower()
-    if text_lower == 'edit':
-        logger.info(f"Command detected without /: {text}")
-        return await edit_command(update, context)
-    elif text_lower == 'summary':
-        logger.info(f"Command detected without /: {text}")
-        return await summary(update, context)
-    elif text_lower == 'categories':
-        logger.info(f"Command detected without /: {text}")
-        return await categories(update, context)
-    elif text_lower in ['start', 'help']:
-        logger.info(f"Command detected without /: {text}")
-        return await start(update, context)
-    elif text_lower == 'cancel':
-        logger.info(f"Command detected without /: {text}")
-        return await cancel_edit(update, context)
-    
     await update.message.reply_text("⏳ Processing your transaction...")
     
     expense_data = await categorize_transaction(text)
@@ -594,8 +576,14 @@ def main():
         app.add_handler(CommandHandler("summary", summary))
         app.add_handler(CommandHandler("categories", categories))
         
+        # Custom filter to capture "edit" text without slash
+        edit_text_filter = filters.Regex(r'^edit$', flags=__import__('re').IGNORECASE)
+        
         edit_handler = ConversationHandler(
-            entry_points=[CommandHandler("edit", edit_command)],
+            entry_points=[
+                CommandHandler("edit", edit_command),
+                MessageHandler(edit_text_filter, edit_command)
+            ],
             states={
                 0: [CallbackQueryHandler(select_transaction, pattern="^(select_|cancel)")],
                 1: [CallbackQueryHandler(edit_field_selection, pattern="^(edit_|delete|cancel)")],
