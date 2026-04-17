@@ -210,6 +210,7 @@ async def edit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
 
 async def select_transaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handles transaction selection from the edit menu"""
     query = update.callback_query
     await query.answer()
     
