@@ -576,8 +576,8 @@ def main():
         app.add_handler(CommandHandler("summary", summary))
         app.add_handler(CommandHandler("categories", categories))
         
-        # Custom filter to capture "edit" text without slash
-        edit_text_filter = filters.Regex(r'^edit$', flags=__import__('re').IGNORECASE)
+        # Custom filter to capture "edit" text without slash (case-insensitive)
+        edit_text_filter = filters.Regex(r'^(?i)edit$')
         
         edit_handler = ConversationHandler(
             entry_points=[
