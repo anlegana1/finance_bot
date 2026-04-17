@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 openai_client = OpenAI(api_key=Config.OPENAI_API_KEY)
 supabase: Client = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
 
-EDIT_AMOUNT, EDIT_CATEGORY, EDIT_DESCRIPTION, EDIT_DATE = range(4)
+SELECT_TRANSACTION, SELECT_EDIT_FIELD, EDIT_AMOUNT, EDIT_CATEGORY, EDIT_DESCRIPTION, EDIT_DATE = range(6)
 
 def format_transaction_label(transaction_type: str) -> str:
     return "Income" if transaction_type == "income" else "Expense"
@@ -194,7 +194,7 @@ async def edit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=reply_markup
         )
         logger.info("Returning state 0 - waiting for transaction selection")
-        return 0
+        return SELECT_TRANSACTION
         
     except Exception as e:
         logger.error(f"Error fetching transactions: {e}")
@@ -249,7 +249,7 @@ What do you want to modify?
         
         await query.edit_message_text(text, reply_markup=reply_markup)
         logger.info("Returning state 1 - waiting for field selection")
-        return 1
+        return SELECT_EDIT_FIELD
         
     except Exception as e:
         logger.error(f"Error loading transaction: {e}")
@@ -596,8 +596,8 @@ def main():
                 CommandHandler("edit", edit_command)
             ],
             states={
-                0: [CallbackQueryHandler(select_transaction)],
-                1: [CallbackQueryHandler(edit_field_selection)],
+                SELECT_TRANSACTION: [CallbackQueryHandler(select_transaction)],
+                SELECT_EDIT_FIELD: [CallbackQueryHandler(edit_field_selection)],
                 EDIT_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, update_amount)],
                 EDIT_CATEGORY: [CallbackQueryHandler(update_category, pattern="^(cat_|cancel)")],
                 EDIT_DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, update_description)],
