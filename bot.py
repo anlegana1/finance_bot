@@ -141,6 +141,26 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username or update.effective_user.first_name
     text = update.message.text
     
+    logger.info(f"handle_text called with: '{text}' by user {user_id}")
+    
+    # Detectar comandos sin barra
+    text_lower = text.strip().lower()
+    if text_lower == 'edit':
+        logger.info(f"Command detected without /: {text}")
+        return await edit_command(update, context)
+    elif text_lower == 'summary':
+        logger.info(f"Command detected without /: {text}")
+        return await summary(update, context)
+    elif text_lower == 'categories':
+        logger.info(f"Command detected without /: {text}")
+        return await categories(update, context)
+    elif text_lower in ['start', 'help']:
+        logger.info(f"Command detected without /: {text}")
+        return await start(update, context)
+    elif text_lower == 'cancel':
+        logger.info(f"Command detected without /: {text}")
+        return await cancel_edit(update, context)
+    
     await update.message.reply_text("⏳ Processing your transaction...")
     
     expense_data = await categorize_transaction(text)
